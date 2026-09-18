@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <string>
+#include <fstream> //esta libreria deja leer archivos del pc para el codigo acá en c++ o algo asi
+using namespace std;
+
+struct Actividad { //este es como un nodo del grafo que hicimos en la whiteboard
+    string id;
+    string accion; 
+    int duracion_ms; //en milisegundos
+    vector <string> dependencias; 
+};
+
+map<string, Actividad> grafo; //este es el arreglo que recorroe todos los nodos del grafo que hicimos
+
+int Tiempoaleatorio() {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution dis(100, 5000);
+    return dis(gen);
+}
+
+int main(int palabras, char* vec[]){ //palabra es para saber la cantidad de palabras que se ingresan cuando se mete el archivo y el vec es por el id de arreglo que recorre el grafo
+    if (palabras < 3){
+        cout <<  "se debe usar /. Planificador <archivo.txt> <K>\n";
+        return -1; 
+    }
+
+    string nombrearchivo = vec[1];
+    ifstream archivo(nombrearchivo);
+
+    if (!archivo.is_open()){
+        cout << "error al abrir" << nombrearchivo;
+        return -1;
+    }
+
+    string linea;
+    while(getline(archivo, linea)){
+        stringstream ss(linea);
+        string tempo; //se supone que es como un remplazo al int de duracion de las acciones, pq esa esta en int y se debe leer un string
+        actividad act;
+
+        getline(ss, act.id, ':');
+        getline(ss, act.accion, ':');
+        getline(ss, act.tempo, ':';);
+
+        if(tempo.empty() || tempoo == "" || tempo == " "){
+            act.tempo = Tiempoaleatorio();
+        }
+        else{
+            act.duracion_ms == stoi(tempo); //esto del stpi es para tranformar int en string, revisa si hay alguna manera de hacer esto antes de crear el propio tempo pa ahorrar espacio
+        }
+
+        string dep;
+        getline(ss, dep);
+        grafo[act.id] = act;
+    }
+
+    return 0;
+}
