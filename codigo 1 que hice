@@ -45,7 +45,7 @@ int main(int palabras, char* vec[]){ //palabra es para saber la cantidad de pala
 
         getline(ss, act.id, ':');
         getline(ss, act.nombre, ':');
-        getline(ss, act.tempo, ':');
+        getline(ss, tempo, ':');
 
         if(tempo.empty() || tempo == "" || tempo == " "){
             act.tiempo_ms = Tiempoaleatorio();
