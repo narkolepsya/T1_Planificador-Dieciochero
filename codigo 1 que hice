@@ -57,6 +57,7 @@ int main(int palabras, char* vec[]){ //palabra es para saber la cantidad de pala
 
         string dep;
         getline(ss, dep);
+        cout << "Id: " << act.id << "Nombre: " << act.nombre << "Tiempo: " << act.tiempo_ms;
         grafo[act.id] = act;
     }
 
