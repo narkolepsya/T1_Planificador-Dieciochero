@@ -5,6 +5,7 @@
 #include <fstream> //esta libreria deja leer archivos del pc para el codigo acá en c++ o algo asi
 #include <sstream>
 #include <random>
+
 using namespace std;
 
 struct Actividad { //este es como un nodo del grafo que hicimos en la whiteboard
@@ -19,7 +20,7 @@ map<string, Actividad> grafo; //este es el arreglo que recorroe todos los nodos 
 int Tiempoaleatorio() {
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution dis(100, 5000);
+    uniform_int_distribution<> dis(100, 5000);
     return dis(gen);
 }
 
@@ -51,7 +52,7 @@ int main(int palabras, char* vec[]){ //palabra es para saber la cantidad de pala
             act.tiempo_ms = Tiempoaleatorio();
         }
         else{
-            act.tiempo_ms == stoi(tempo); //esto del stoi es para tranformar int en string, revisa si hay alguna manera de hacer esto antes de crear el propio tempo pa ahorrar espacio
+            act.tiempo_ms = stoi(tempo); //esto del stoi es para tranformar int en string, revisa si hay alguna manera de hacer esto antes de crear el propio tempo pa ahorrar espacio
         }
 
         string dep;
