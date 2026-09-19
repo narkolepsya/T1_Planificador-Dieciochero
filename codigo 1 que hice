@@ -3,12 +3,14 @@
 #include <map>
 #include <string>
 #include <fstream> //esta libreria deja leer archivos del pc para el codigo acá en c++ o algo asi
+#include <sstream>
+#include <random>
 using namespace std;
 
 struct Actividad { //este es como un nodo del grafo que hicimos en la whiteboard
     string id;
-    string accion; 
-    int duracion_ms; //en milisegundos
+    string nombre; 
+    int tiempo_ms; //en milisegundos
     vector <string> dependencias; 
 };
 
@@ -39,17 +41,17 @@ int main(int palabras, char* vec[]){ //palabra es para saber la cantidad de pala
     while(getline(archivo, linea)){
         stringstream ss(linea);
         string tempo; //se supone que es como un remplazo al int de duracion de las acciones, pq esa esta en int y se debe leer un string
-        actividad act;
+        Actividad act;
 
         getline(ss, act.id, ':');
-        getline(ss, act.accion, ':');
-        getline(ss, act.tempo, ':';);
+        getline(ss, act.nombre, ':');
+        getline(ss, act.tempo, ':');
 
-        if(tempo.empty() || tempoo == "" || tempo == " "){
-            act.tempo = Tiempoaleatorio();
+        if(tempo.empty() || tempo == "" || tempo == " "){
+            act.tiempo_ms = Tiempoaleatorio();
         }
         else{
-            act.duracion_ms == stoi(tempo); //esto del stpi es para tranformar int en string, revisa si hay alguna manera de hacer esto antes de crear el propio tempo pa ahorrar espacio
+            act.tiempo_ms == stoi(tempo); //esto del stoi es para tranformar int en string, revisa si hay alguna manera de hacer esto antes de crear el propio tempo pa ahorrar espacio
         }
 
         string dep;
