@@ -3,11 +3,19 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include <cstdio>
 
 using namespace std;
 
 const int MAX_MENSAJE = 100;
+
+volatile sig_atomic_t interrumpido = 0;
+
+void manejarSIGINT(int)
+{
+    interrumpido = 1;
+}
 
 void runActivity(Actividad act)
 {
@@ -19,6 +27,57 @@ void runActivity(Actividad act)
 
     cout << "Actividad " << act.id
          << " terminada" << endl;
+}
+
+void abortarPlan(map<pid_t, string> & actividadesActivas,
+                 map<pid_t, int> & pipesLectura,
+                 map<string, Estado> & estados)
+{
+    map<pid_t, string> :: iterator itProceso;
+    map<pid_t, int> :: iterator itPipe;
+    map<string, Estado> :: iterator itEstado;
+
+    // Envía una señal de término a los hijos activos
+    for (itProceso = actividadesActivas.begin();
+         itProceso != actividadesActivas.end();
+         itProceso++)
+    {
+        kill(itProceso -> first, SIGTERM);
+    }
+
+    // Espera a los hijos para no dejar procesos zombis
+    for (itProceso = actividadesActivas.begin();
+         itProceso != actividadesActivas.end();
+         itProceso++)
+    {
+        waitpid(itProceso -> first, NULL, 0);
+    }
+
+    // Cierra los extremos de lectura que conserva el padre
+    for (itPipe = pipesLectura.begin();
+         itPipe != pipesLectura.end();
+         itPipe++)
+    {
+        close(itPipe -> second);
+    }
+
+    // Marca como abortadas las actividades que no terminaron
+    for (itEstado = estados.begin();
+         itEstado != estados.end();
+         itEstado++)
+    {
+        if (itEstado -> second == PENDIENTE ||
+            itEstado -> second == EJECUTANDO)
+        {
+            itEstado -> second = ABORTADA;
+
+            cout << "Actividad " << itEstado -> first
+                 << " abortada" << endl;
+        }
+    }
+
+    actividadesActivas.clear();
+    pipesLectura.clear();
 }
 
 void runScheduler(map<string, Actividad> & grafo,
@@ -34,12 +93,25 @@ void runScheduler(map<string, Actividad> & grafo,
     int terminadas = 0;
     int total = grafo.size();
 
+    interrumpido = 0;
+
+    if (signal(SIGINT, manejarSIGINT) == SIG_ERR)
+    {
+        cout << "Error: no se pudo configurar SIGINT" << endl;
+        return;
+    }
+
     while (terminadas < total)
     {
         bool errorCreacion = false;
 
         for (it = grafo.begin(); it != grafo.end(); it++)
         {
+            if (interrumpido == 1)
+            {
+                break;
+            }
+
             if (activos >= K)
             {
                 break;
@@ -89,7 +161,9 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pid == 0)
                 {
-                    // El hijo lee sus insumos y escribe su finalización
+                    // El hijo vuelve al comportamiento normal de Ctrl+C
+                    signal(SIGINT, SIG_DFL);
+
                     close(canalEntrada[1]);
                     close(canalSalida[0]);
 
@@ -143,7 +217,6 @@ void runScheduler(map<string, Actividad> & grafo,
                     _exit(0);
                 }
 
-                // El padre escribe los insumos y lee la finalización
                 close(canalEntrada[0]);
                 close(canalSalida[1]);
 
@@ -184,15 +257,45 @@ void runScheduler(map<string, Actividad> & grafo,
             }
         }
 
+        if (interrumpido == 1)
+        {
+            cout << endl
+                 << "Interrupcion recibida. Abortando el plan..."
+                 << endl;
+
+            abortarPlan(actividadesActivas,
+                        pipesLectura,
+                        estados);
+
+            signal(SIGINT, SIG_DFL);
+            return;
+        }
+
         if (activos > 0)
         {
             int estadoHijo;
             pid_t pidFin = waitpid(-1, &estadoHijo, 0);
 
+            if (interrumpido == 1)
+            {
+                cout << endl
+                     << "Interrupcion recibida. Abortando el plan..."
+                     << endl;
+
+                abortarPlan(actividadesActivas,
+                            pipesLectura,
+                            estados);
+
+                signal(SIGINT, SIG_DFL);
+                return;
+            }
+
             if (pidFin < 0)
             {
                 cout << "Error: no se pudo esperar al proceso hijo"
                      << endl;
+
+                signal(SIGINT, SIG_DFL);
                 return;
             }
 
@@ -202,6 +305,20 @@ void runScheduler(map<string, Actividad> & grafo,
                 read(pipesLectura[pidFin],
                      mensajeSalida,
                      MAX_MENSAJE);
+
+            if (interrumpido == 1)
+            {
+                cout << endl
+                     << "Interrupcion recibida. Abortando el plan..."
+                     << endl;
+
+                abortarPlan(actividadesActivas,
+                            pipesLectura,
+                            estados);
+
+                signal(SIGINT, SIG_DFL);
+                return;
+            }
 
             close(pipesLectura[pidFin]);
             pipesLectura.erase(pidFin);
@@ -229,13 +346,18 @@ void runScheduler(map<string, Actividad> & grafo,
         }
         else if (errorCreacion == true)
         {
+            signal(SIGINT, SIG_DFL);
             return;
         }
         else
         {
             cout << "Error: no hay actividades disponibles para ejecutar"
                  << endl;
+
+            signal(SIGINT, SIG_DFL);
             return;
         }
     }
+
+    signal(SIGINT, SIG_DFL);
 }
