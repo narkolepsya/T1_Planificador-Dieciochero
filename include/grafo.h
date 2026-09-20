@@ -19,5 +19,6 @@ bool tieneCiclo(map<string, Actividad> & grafo);
 bool revisarCiclo(string id, map<string, Actividad> & grafo,
                   map<string, bool> & visitado,
                   map<string, bool> & enCamino);
+bool ready(Actividad & act, map<string, Estado> & estados);
 
 #endif

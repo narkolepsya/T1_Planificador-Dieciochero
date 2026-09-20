@@ -27,9 +27,9 @@ bool validate(map<string, Actividad> & grafo)
     return true;
 }
 
-bool revisarCiclo(string id, map<string, Actividad>& grafo,
-                  map<string, bool>& visitado,
-                  map<string, bool>& enCamino)
+bool revisarCiclo(string id, map<string, Actividad> & grafo,
+                  map<string, bool> & visitado,
+                  map<string, bool> & enCamino)
 {
     if (enCamino[id] == true)
     {
@@ -56,7 +56,7 @@ bool revisarCiclo(string id, map<string, Actividad>& grafo,
     return false;
 }
 
-bool tieneCiclo(map<string, Actividad>& grafo)
+bool tieneCiclo(map<string, Actividad> & grafo)
 {
     map<string, bool> visitado;
     map<string, bool> enCamino;
@@ -72,4 +72,19 @@ bool tieneCiclo(map<string, Actividad>& grafo)
         }
     }
     return false;
+}
+
+bool ready(Actividad & act, map<string, Estado> & estados)
+{
+    int cantidad = act.dependencias.size();
+    for (int i = 0; i < cantidad; i++)
+    {
+        string dependencia = act.dependencias[i];
+
+        if (estados[dependencia] != TERMINADA)
+        {
+            return false;
+        }
+    }
+    return true;
 }
