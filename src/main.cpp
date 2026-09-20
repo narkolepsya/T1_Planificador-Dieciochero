@@ -3,6 +3,7 @@
 #include <ctime>
 #include <map>
 #include "parser.h"
+#include "grafo.h"
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -17,6 +18,12 @@ int main(int argc, char* argv[])
     string fileName = argv[1];
     int K = stoi(argv[2]);
     map<string, Actividad> grafo = loadFile(fileName);
+    
+    if (validate(grafo) == false)
+    {
+        return -1;
+    }
+
     cout << "K: " << K << endl;
     map<string, Actividad> :: iterator it;
 
