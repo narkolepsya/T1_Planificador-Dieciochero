@@ -26,11 +26,13 @@ int main(int argc, char* argv[])
         cout << "Nombre: " << it -> second.nombre << endl;
         cout << "Tiempo: " << it -> second.tiempo_ms << endl;
         cout << "Dependencias: ";
-        for (int i = 0; i < it -> second.dependencias.size(); i++)
+
+        int cantidadDependencias = it -> second.dependencias.size();
+        for (int i = 0; i < cantidadDependencias; i++)
         {
             cout << it -> second.dependencias[i] << " ";
         }
-        cout << endl << endl;
+            cout << endl << endl;
     }
     return 0;
 }
