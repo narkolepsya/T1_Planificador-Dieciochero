@@ -1,65 +1,36 @@
 #include <iostream>
-#include <vector>
+#include <cstdlib>
+#include <ctime>
 #include <map>
-#include <string>
-#include <fstream> //esta libreria deja leer archivos del pc para el codigo acá en c++ o algo asi
-#include <sstream>
-#include <random>
-
+#include "parser.h"
 using namespace std;
 
-struct Actividad { //este es como un nodo del grafo que hicimos en la whiteboard
-    string id;
-    string nombre; 
-    int tiempo_ms; //en milisegundos
-    vector <string> dependencias; 
-};
-
-map<string, Actividad> grafo; //este es el arreglo que recorroe todos los nodos del grafo que hicimos
-
-int Tiempoaleatorio() {
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(100, 5000);
-    return dis(gen);
-}
-
-int main(int palabras, char* vec[]){ //palabra es para saber la cantidad de palabras que se ingresan cuando se mete el archivo y el vec es por el id de arreglo que recorre el grafo
-    if (palabras < 3){
-        cout <<  "se debe usar /. Planificador <archivo.txt> <K>\n";
-        return -1; 
-    }
-
-    string nombrearchivo = vec[1];
-    ifstream archivo(nombrearchivo);
-
-    if (!archivo.is_open()){
-        cout << "error al abrir" << nombrearchivo;
+int main(int argc, char* argv[])
+{
+    if (argc != 3)
+    {
+        cout << "Uso: ./planificador <archivo.txt> <K>" << endl;
         return -1;
     }
 
-    string linea;
-    while(getline(archivo, linea)){
-        stringstream ss(linea);
-        string tempo; //se supone que es como un remplazo al int de duracion de las acciones, pq esa esta en int y se debe leer un string
-        Actividad act;
+    srand(time(NULL));
+    string fileName = argv[1];
+    int K = stoi(argv[2]);
+    map<string, Actividad> grafo = loadFile(fileName);
+    cout << "K: " << K << endl;
+    map<string, Actividad> :: iterator it;
 
-        getline(ss, act.id, ':');
-        getline(ss, act.nombre, ':');
-        getline(ss, tempo, ':');
-
-        if(tempo.empty() || tempo == "" || tempo == " "){
-            act.tiempo_ms = Tiempoaleatorio();
+    for (it = grafo.begin(); it != grafo.end(); it++)
+    {
+        cout << "ID: " << it -> second.id << endl;
+        cout << "Nombre: " << it -> second.nombre << endl;
+        cout << "Tiempo: " << it -> second.tiempo_ms << endl;
+        cout << "Dependencias: ";
+        for (int i = 0; i < it -> second.dependencias.size(); i++)
+        {
+            cout << it -> second.dependencias[i] << " ";
         }
-        else{
-            act.tiempo_ms = stoi(tempo); //esto del stoi es para tranformar int en string, revisa si hay alguna manera de hacer esto antes de crear el propio tempo pa ahorrar espacio
-        }
-
-        string dep;
-        getline(ss, dep);
-        cout << "Id: " << act.id << "Nombre: " << act.nombre << "Tiempo: " << act.tiempo_ms;
-        grafo[act.id] = act;
+        cout << endl << endl;
     }
-
     return 0;
 }

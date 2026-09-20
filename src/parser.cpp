@@ -1,5 +1,13 @@
 #include "parser.h"
 #include <sstream>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+
+int randomTime()
+{
+    return 100 + rand() % 4901;
+}
 
 string trim(string texto)
 {
@@ -7,10 +15,12 @@ string trim(string texto)
     {
         return texto;
     }
-    int ini = 0;
-    int fin = texto.length() - 1;
 
-    while (ini < texto.length() && texto[ini] == ' ')
+    int largo = texto.length();
+    int ini = 0;
+    int fin = largo - 1;
+
+    while (ini < largo && texto[ini] == ' ')
     {
         ini++;
     }
@@ -18,6 +28,7 @@ string trim(string texto)
     {
         fin--;
     }
+
     string limpio = "";
     for (int i = ini; i <= fin; i++)
     {
@@ -43,4 +54,55 @@ vector<string> parsearDependencias(string texto)
         dependencias.push_back(dependencia);
     }
     return dependencias;
+}
+
+Actividad parsearLinea(string linea)
+{
+    Actividad act;
+    stringstream ss(linea);
+
+    string id;
+    string nombre;
+    string tiempo;
+    string dependencias;
+
+    getline(ss, id, ':');
+    getline(ss, nombre, ':');
+    getline(ss, tiempo, ':');
+    getline(ss, dependencias);
+
+    act.id = trim(id);
+    act.nombre = trim(nombre);
+    tiempo = trim(tiempo);
+
+    if (tiempo.empty())
+    {
+        act.tiempo_ms = randomTime();
+    }
+    else
+    {
+        act.tiempo_ms = stoi(tiempo);
+    }
+    act.dependencias = parsearDependencias(dependencias);
+    return act;
+}
+
+map<string, Actividad> loadFile(string fileName)
+{
+    map<string, Actividad> grafo;
+    ifstream archivo(fileName);
+    if (!archivo.is_open())
+    {
+        cout << "Error al abrir el archivo " << fileName << endl;
+        return grafo;
+    }
+
+    string linea;
+    while (getline(archivo, linea))
+    {
+        Actividad act = parsearLinea(linea);
+        grafo[act.id] = act;
+    }
+    archivo.close();
+    return grafo;
 }
