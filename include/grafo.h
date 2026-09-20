@@ -21,6 +21,7 @@ bool revisarCiclo(string id, map<string, Actividad> & grafo,
                   map<string, bool> & enCamino);
 bool ready(Actividad & act, map<string, Estado> & estados);
 
-void abortarDependientes(string idFallida, map<string, Actividad> & grafo, map<string, Estado> & estados); 
-
+int abortarDependientes(string idFallida,
+                        map<string, Actividad> & grafo,
+                        map<string, Estado> & estados);
 #endif

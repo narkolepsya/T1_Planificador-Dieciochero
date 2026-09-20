@@ -94,7 +94,7 @@ void runScheduler(map<string, Actividad> & grafo,
     map<string, Actividad> :: iterator it;
 
     int activos = 0;
-    int terminadas = 0;
+    int finalizadas = 0;
     int total = grafo.size();
 
     interrumpido = 0;
@@ -109,7 +109,7 @@ void runScheduler(map<string, Actividad> & grafo,
         return;
     }
 
-    while (terminadas < total)
+    while (finalizadas < total)
     {
         bool errorCreacion = false;
 
@@ -326,12 +326,21 @@ void runScheduler(map<string, Actividad> & grafo,
                 return;
             }
 
-            char mensajeSalida[MAX_MENSAJE] = "";
+            string idAct = actividadesActivas[pidFin];
 
-            ssize_t leidos =
-                read(pipesLectura[pidFin],
-                     mensajeSalida,
-                     MAX_MENSAJE);
+            bool terminoBien =
+                WIFEXITED(estadoHijo) &&
+                WEXITSTATUS(estadoHijo) == 0;
+
+            char mensajeSalida[MAX_MENSAJE] = "";
+            ssize_t leidos = -1;
+
+            if (terminoBien == true)
+            {
+                leidos = read(pipesLectura[pidFin],
+                            mensajeSalida,
+                            MAX_MENSAJE);
+            }
 
             if (interrumpido == 1)
             {
@@ -352,30 +361,57 @@ void runScheduler(map<string, Actividad> & grafo,
             close(pipesLectura[pidFin]);
             pipesLectura.erase(pidFin);
 
-            string idAct = actividadesActivas[pidFin];
-
-            if (leidos > 0)
+            if (terminoBien == true &&
+                leidos == MAX_MENSAJE)
             {
                 mensajes[idAct] = mensajeSalida;
 
                 cout << AMARILLO << "[PIPE] "
-                     << REINICIAR << "Mensaje recibido: "
-                     << mensajeSalida << endl;
+                    << REINICIAR << "Mensaje recibido: "
+                    << mensajeSalida << endl;
+
+                estados[idAct] = TERMINADA;
+                finalizadas++;
             }
             else
             {
-                cout << ROJO << "[ERROR] "
-                     << REINICIAR
-                     << "No se recibio el mensaje "
-                     << "de la actividad " << idAct
-                     << endl;
+                map<string, Estado> estadosAnteriores = estados;
+
+                estados[idAct] = FALLIDA;
+
+                cout << ROJO << "[FALLIDA] "
+                    << REINICIAR << "Actividad "
+                    << idAct << endl;
+
+                int abortadas =
+                    abortarDependientes(idAct,
+                                        grafo,
+                                        estados);
+
+                map<string, Estado> :: iterator itEstado;
+
+                for (itEstado = estados.begin();
+                    itEstado != estados.end();
+                    itEstado++)
+                {
+                    if (estadosAnteriores[itEstado -> first] != ABORTADA &&
+                        itEstado -> second == ABORTADA)
+                    {
+                        cout << MAGENTA << "[ABORTADA] "
+                            << REINICIAR << "Actividad "
+                            << itEstado -> first
+                            << " por depender de "
+                            << idAct << endl;
+                    }
+                }
+
+                finalizadas += 1 + abortadas;
             }
 
-            estados[idAct] = TERMINADA;
             actividadesActivas.erase(pidFin);
 
             activos--;
-            terminadas++;
+
         }
         else if (errorCreacion == true)
         {

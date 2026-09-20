@@ -98,29 +98,44 @@ bool ready(Actividad& act, map<string, Estado>& estados)
     return true;
 }
 
-void abortarDependientes(string idFallida, map<string, Actividad> &grafo, map<string, Estado> & estados)
+int abortarDependientes(string idFallida,
+                        map<string, Actividad> & grafo,
+                        map<string, Estado> & estados)
 {
-    map<string, Actividad>::iterator it; 
+    map<string, Actividad> :: iterator it;
+    int abortadas = 0;
 
-    for(it = grafo.begin(); it != grafo.end(); it++){
-        string idActual = it->first;
+    for (it = grafo.begin(); it != grafo.end(); it++)
+    {
+        string idActual = it -> first;
 
-        if(estados[idActual] == ABORTADA){
+        if (estados[idActual] != PENDIENTE)
+        {
             continue;
         }
 
-        int cantidad = it->second.dependencias.size();
-        bool esHija = false; 
+        int cantidad = it -> second.dependencias.size();
+        bool esHija = false;
 
-        for (int i = 0; i < cantidad; i++){
-            if (it->second.dependencias[i] == idFallida){
+        for (int i = 0; i < cantidad; i++)
+        {
+            if (it -> second.dependencias[i] == idFallida)
+            {
                 esHija = true;
                 break;
             }
         }
-        if (esHija == true){
+
+        if (esHija == true)
+        {
             estados[idActual] = ABORTADA;
-            abortarDependientes(idActual, grafo, estados); 
+            abortadas++;
+
+            abortadas += abortarDependientes(idActual,
+                                              grafo,
+                                              estados);
         }
     }
+
+    return abortadas;
 }
