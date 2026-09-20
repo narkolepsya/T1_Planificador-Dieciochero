@@ -74,9 +74,16 @@ bool tieneCiclo(map<string, Actividad> & grafo)
     return false;
 }
 
-bool ready(Actividad & act, map<string, Estado> & estados)
+// devuelve true si la actividad está lista para ejecutarse, false en caso contrario
+bool ready(Actividad& act, map<string, Estado>& estados)
 {
+    if (estados[act.id] != PENDIENTE)
+    {
+        return false;
+    }
+
     int cantidad = act.dependencias.size();
+
     for (int i = 0; i < cantidad; i++)
     {
         string dependencia = act.dependencias[i];
@@ -86,5 +93,6 @@ bool ready(Actividad & act, map<string, Estado> & estados)
             return false;
         }
     }
+
     return true;
 }
