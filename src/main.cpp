@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "grafo.h"
 #include "scheduler.h"
+#include "terminal.h"
 
 using namespace std;
 
@@ -55,6 +56,7 @@ int main(int argc, char* argv[])
     }
 
     iniciarEstados(grafo, estados);
+    interfaz(fileName, K, grafo.size());
     runScheduler(grafo, estados, K);
     return 0;
 }
