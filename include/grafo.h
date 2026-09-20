@@ -15,5 +15,9 @@ enum Estado
 };
 
 bool validate(map<string, Actividad> & grafo);
+bool tieneCiclo(map<string, Actividad> & grafo);
+bool revisarCiclo(string id, map<string, Actividad> & grafo,
+                  map<string, bool> & visitado,
+                  map<string, bool> & enCamino);
 
 #endif

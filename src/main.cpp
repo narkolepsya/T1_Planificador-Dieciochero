@@ -18,9 +18,15 @@ int main(int argc, char* argv[])
     string fileName = argv[1];
     int K = stoi(argv[2]);
     map<string, Actividad> grafo = loadFile(fileName);
-    
+
     if (validate(grafo) == false)
     {
+        return -1;
+    }
+
+    if (tieneCiclo(grafo) == true)
+    {
+        cout << "Error: ciclo circular de depedencias" << endl;
         return -1;
     }
 
