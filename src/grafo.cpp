@@ -1,5 +1,6 @@
 #include "grafo.h"
 #include <iostream>
+#include <map>
 
 bool validate(map<string, Actividad> & grafo)
 {
@@ -95,4 +96,31 @@ bool ready(Actividad& act, map<string, Estado>& estados)
     }
 
     return true;
+}
+
+void abortarDependientes(string idFallida, map<string, Actividad> &grafo, map<string, Estado> & estados)
+{
+    map<string, Actividad>::iterator it; 
+
+    for(it = grafo.begin(); it != grafo.end(); it++){
+        string idActual = it->first;
+
+        if(estados[idActual] == ABORTADA){
+            continue;
+        }
+
+        int cantidad = it->second.dependencias.size();
+        bool esHija = false; 
+
+        for (int i = 0; i < cantidad; i++){
+            if (it->second.dependencias[i] == idFallida){
+                esHija = true;
+                break;
+            }
+        }
+        if (esHija == true){
+            estados[idActual] = ABORTADA;
+            abortarDependientes(idActual, grafo, estados); 
+        }
+    }
 }
