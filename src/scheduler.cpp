@@ -7,18 +7,18 @@
 
 using namespace std;
 
-const int TAM_MENSAJE = 100;
+const int MAX_MENSAJE = 100;
 
 void runActivity(Actividad act)
 {
-    cout << "Iniciando actividad " << act.id << ": " << act.nombre
-         << endl;
+    cout << "Iniciando actividad " << act.id
+         << ": " << act.nombre << endl;
 
-    // convierte milisegundos a microsegundos
+    // Convierte milisegundos a microsegundos
     usleep(act.tiempo_ms * 1000);
 
-    cout << "Actividad " << act.id << " terminada"
-         << endl;
+    cout << "Actividad " << act.id
+         << " terminada" << endl;
 }
 
 void runScheduler(map<string, Actividad> & grafo,
@@ -27,20 +27,20 @@ void runScheduler(map<string, Actividad> & grafo,
 {
     map<pid_t, string> actividadesActivas;
     map<pid_t, int> pipesLectura;
-    map<string, string> mensajesFinalizacion;
+    map<string, string> mensajes;
     map<string, Actividad> :: iterator it;
 
-    int procesosActivos = 0;
-    int actividadesTerminadas = 0;
-    int totalActividades = grafo.size();
+    int activos = 0;
+    int terminadas = 0;
+    int total = grafo.size();
 
-    while (actividadesTerminadas < totalActividades)
+    while (terminadas < total)
     {
         bool errorCreacion = false;
 
         for (it = grafo.begin(); it != grafo.end(); it++)
         {
-            if (procesosActivos >= K)
+            if (activos >= K)
             {
                 break;
             }
@@ -52,8 +52,8 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pipe(canalEntrada) < 0)
                 {
-                    cout << "Error: no se pudo crear el pipe de entrada de la actividad "
-                         << it -> first << endl;
+                    cout << "Error: no se pudo crear el pipe de entrada "
+                         << "de la actividad " << it -> first << endl;
 
                     errorCreacion = true;
                     break;
@@ -61,8 +61,8 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pipe(canalSalida) < 0)
                 {
-                    cout << "Error: no se pudo crear el pipe de salida de la actividad "
-                         << it -> first << endl;
+                    cout << "Error: no se pudo crear el pipe de salida "
+                         << "de la actividad " << it -> first << endl;
 
                     close(canalEntrada[0]);
                     close(canalEntrada[1]);
@@ -75,8 +75,8 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pid < 0)
                 {
-                    cout << "Error: no se pudo crear el proceso de la actividad "
-                         << it -> first << endl;
+                    cout << "Error: no se pudo crear el proceso "
+                         << "de la actividad " << it -> first << endl;
 
                     close(canalEntrada[0]);
                     close(canalEntrada[1]);
@@ -93,19 +93,19 @@ void runScheduler(map<string, Actividad> & grafo,
                     close(canalEntrada[1]);
                     close(canalSalida[0]);
 
-                    int cantidadDependencias =
+                    int cantidad =
                         it -> second.dependencias.size();
 
-                    for (int i = 0; i < cantidadDependencias; i++)
+                    for (int i = 0; i < cantidad; i++)
                     {
-                        char mensajeEntrada[TAM_MENSAJE] = "";
+                        char mensajeEntrada[MAX_MENSAJE] = "";
 
-                        ssize_t cantidadLeida =
+                        ssize_t leidos =
                             read(canalEntrada[0],
                                  mensajeEntrada,
-                                 TAM_MENSAJE);
+                                 MAX_MENSAJE);
 
-                        if (cantidadLeida != TAM_MENSAJE)
+                        if (leidos != MAX_MENSAJE)
                         {
                             close(canalEntrada[0]);
                             close(canalSalida[1]);
@@ -121,21 +121,21 @@ void runScheduler(map<string, Actividad> & grafo,
 
                     runActivity(it -> second);
 
-                    char mensajeSalida[TAM_MENSAJE] = "";
+                    char mensajeSalida[MAX_MENSAJE] = "";
 
                     snprintf(mensajeSalida,
-                             TAM_MENSAJE,
+                             MAX_MENSAJE,
                              "Actividad %s terminada",
                              it -> second.id.c_str());
 
-                    ssize_t cantidadEscrita =
+                    ssize_t escritos =
                         write(canalSalida[1],
                               mensajeSalida,
-                              TAM_MENSAJE);
+                              MAX_MENSAJE);
 
                     close(canalSalida[1]);
 
-                    if (cantidadEscrita != TAM_MENSAJE)
+                    if (escritos != MAX_MENSAJE)
                     {
                         _exit(1);
                     }
@@ -147,30 +147,30 @@ void runScheduler(map<string, Actividad> & grafo,
                 close(canalEntrada[0]);
                 close(canalSalida[1]);
 
-                int cantidadDependencias =
+                int cantidad =
                     it -> second.dependencias.size();
 
-                for (int i = 0; i < cantidadDependencias; i++)
+                for (int i = 0; i < cantidad; i++)
                 {
-                    string idDependencia =
+                    string idDep =
                         it -> second.dependencias[i];
 
-                    char mensajeEntrada[TAM_MENSAJE] = "";
+                    char mensajeEntrada[MAX_MENSAJE] = "";
 
                     snprintf(mensajeEntrada,
-                             TAM_MENSAJE,
+                             MAX_MENSAJE,
                              "%s",
-                             mensajesFinalizacion[idDependencia].c_str());
+                             mensajes[idDep].c_str());
 
-                    ssize_t cantidadEscrita =
+                    ssize_t escritos =
                         write(canalEntrada[1],
                               mensajeEntrada,
-                              TAM_MENSAJE);
+                              MAX_MENSAJE);
 
-                    if (cantidadEscrita != TAM_MENSAJE)
+                    if (escritos != MAX_MENSAJE)
                     {
-                        cout << "Error: no se pudo enviar el insumo de la actividad "
-                             << idDependencia << endl;
+                        cout << "Error: no se pudo enviar el insumo "
+                             << "de la actividad " << idDep << endl;
                     }
                 }
 
@@ -180,54 +180,52 @@ void runScheduler(map<string, Actividad> & grafo,
                 actividadesActivas[pid] = it -> first;
                 pipesLectura[pid] = canalSalida[0];
 
-                procesosActivos++;
+                activos++;
             }
         }
 
-        if (procesosActivos > 0)
+        if (activos > 0)
         {
             int estadoHijo;
-            pid_t pidTerminado = waitpid(-1, &estadoHijo, 0);
+            pid_t pidFin = waitpid(-1, &estadoHijo, 0);
 
-            if (pidTerminado < 0)
+            if (pidFin < 0)
             {
                 cout << "Error: no se pudo esperar al proceso hijo"
                      << endl;
                 return;
             }
 
-            char mensajeSalida[TAM_MENSAJE] = "";
+            char mensajeSalida[MAX_MENSAJE] = "";
 
-            ssize_t cantidadLeida =
-                read(pipesLectura[pidTerminado],
+            ssize_t leidos =
+                read(pipesLectura[pidFin],
                      mensajeSalida,
-                     TAM_MENSAJE);
+                     MAX_MENSAJE);
 
-            close(pipesLectura[pidTerminado]);
-            pipesLectura.erase(pidTerminado);
+            close(pipesLectura[pidFin]);
+            pipesLectura.erase(pidFin);
 
-            string idActividad =
-                actividadesActivas[pidTerminado];
+            string idAct = actividadesActivas[pidFin];
 
-            if (cantidadLeida > 0)
+            if (leidos > 0)
             {
-                mensajesFinalizacion[idActividad] =
-                    mensajeSalida;
+                mensajes[idAct] = mensajeSalida;
 
                 cout << "Mensaje recibido por pipe: "
                      << mensajeSalida << endl;
             }
             else
             {
-                cout << "Error: no se recibió el mensaje de la actividad "
-                     << idActividad << endl;
+                cout << "Error: no se recibio el mensaje "
+                     << "de la actividad " << idAct << endl;
             }
 
-            estados[idActividad] = TERMINADA;
-            actividadesActivas.erase(pidTerminado);
+            estados[idAct] = TERMINADA;
+            actividadesActivas.erase(pidFin);
 
-            procesosActivos--;
-            actividadesTerminadas++;
+            activos--;
+            terminadas++;
         }
         else if (errorCreacion == true)
         {
