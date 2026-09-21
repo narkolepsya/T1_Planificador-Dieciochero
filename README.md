@@ -194,9 +194,18 @@ La señal `SIGINT` permite interrumpir la planificación mediante `Ctrl+C`. Cuan
 
 Se utiliza un archivo `Makefile` para centralizar las opciones de compilación y construir todos los módulos mediante un único comando. Esto evita repetir manualmente instrucciones extensas y permite eliminar los archivos generados mediante `make clean`.
 
+--- 
+
+## 8. Pruebas de carga
+
+El planificador puede ser evaluado con una planificación de hasta **10.000 actividades**, correspondiente a una carga máxima estipulada por las condiciones del proyecto. Adicionalmente, se realizó una prueba con **20.000 actividades** para observar su comportamiento por encima del requisito solicitado. Ambas ejecuciones finalizaron correctamente con código de salida `0`, lo que comprueba que el ejecutable es capaz de soportar esa cantidad.
+
+> [!NOTE]
+> Debido a la cantidad de mensajes generados, la salida se redirigió a archivos de texto para evitar saturar la terminal. Los archivos utilizados durante estas pruebas no forman parte del repositorio.
+
 ---
 
-## 8. Integrantes
+## 9. Integrantes
 
 - **Gabriela Esparza**
 - **Jose Larrondo**
