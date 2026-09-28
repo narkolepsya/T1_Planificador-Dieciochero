@@ -11,6 +11,22 @@ const string MAGENTA = "\033[35m";
 const string AZUL = "\033[34m";
 const string REINICIAR = "\033[0m";
 
+const string ETIQUETAS[] = {
+    "INICIO", "FIN", "PIPE", "ERROR",
+    "INTERRUPCION", "FALLIDA", "ABORTADA"
+};
+
+const string COLORES[] = {
+    CIAN, VERDE, AMARILLO, ROJO,
+    AZUL, ROJO, MAGENTA
+};
+
+void mostrarEvento(TipoEvento tipo, string mensaje)
+{
+    cout << COLORES[tipo] << "[" << ETIQUETAS[tipo] << "] "
+         << REINICIAR << mensaje << endl;
+}
+
 void interfaz(string fileName, int K, int total)
 {
     cout << endl;

@@ -20,16 +20,14 @@ void manejarSIGINT(int)
 
 void runActivity(Actividad act)
 {
-    cout << CIAN << "[INICIO] "
-         << REINICIAR << "Actividad " << act.id
-         << ": " << act.nombre << endl;
+    mostrarEvento(EVENTO_INICIO,
+                  "Actividad " + act.id + ": " + act.nombre);
 
     // Convierte milisegundos a microsegundos
     usleep(act.tiempo_ms * 1000);
 
-    cout << VERDE << "[FIN] "
-         << REINICIAR << "Actividad " << act.id
-         << " terminada" << endl;
+    mostrarEvento(EVENTO_FIN,
+                  "Actividad " + act.id + " terminada");
 }
 
 void abortarPlan(map<pid_t, string> & actividadesActivas,
@@ -74,14 +72,31 @@ void abortarPlan(map<pid_t, string> & actividadesActivas,
         {
             itEstado -> second = ABORTADA;
 
-            cout << MAGENTA << "[ABORTADA] "
-                 << REINICIAR << "Actividad "
-                 << itEstado -> first << endl;
+            mostrarEvento(EVENTO_ABORTADA,
+                          "Actividad " + itEstado -> first);
         }
     }
 
     actividadesActivas.clear();
     pipesLectura.clear();
+}
+
+bool revisarInterrupcion(map<pid_t, string> & actividadesActivas,
+                         map<pid_t, int> & pipesLectura,
+                         map<string, Estado> & estados)
+{
+    if (interrumpido == 0)
+    {
+        return false;
+    }
+
+    cout << endl;
+    mostrarEvento(EVENTO_INTERRUPCION,
+                  "Inspeccion de la Seremi: abortando el plan...");
+
+    abortarPlan(actividadesActivas, pipesLectura, estados);
+    signal(SIGINT, SIG_DFL);
+    return true;
 }
 
 void runScheduler(map<string, Actividad> & grafo,
@@ -101,10 +116,8 @@ void runScheduler(map<string, Actividad> & grafo,
 
     if (signal(SIGINT, manejarSIGINT) == SIG_ERR)
     {
-        cout << ROJO << "[ERROR] "
-             << REINICIAR
-             << "No se pudo configurar SIGINT"
-             << endl;
+        mostrarEvento(EVENTO_ERROR,
+                      "No se pudo configurar SIGINT");
 
         return;
     }
@@ -132,11 +145,9 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pipe(canalEntrada) < 0)
                 {
-                    cout << ROJO << "[ERROR] "
-                         << REINICIAR
-                         << "No se pudo crear el pipe de entrada "
-                         << "de la actividad " << it -> first
-                         << endl;
+                    mostrarEvento(EVENTO_ERROR,
+                                  "No se pudo crear el pipe de entrada "
+                                  "de la actividad " + it -> first);
 
                     errorCreacion = true;
                     break;
@@ -144,11 +155,9 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pipe(canalSalida) < 0)
                 {
-                    cout << ROJO << "[ERROR] "
-                         << REINICIAR
-                         << "No se pudo crear el pipe de salida "
-                         << "de la actividad " << it -> first
-                         << endl;
+                    mostrarEvento(EVENTO_ERROR,
+                                  "No se pudo crear el pipe de salida "
+                                  "de la actividad " + it -> first);
 
                     close(canalEntrada[0]);
                     close(canalEntrada[1]);
@@ -161,11 +170,9 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 if (pid < 0)
                 {
-                    cout << ROJO << "[ERROR] "
-                         << REINICIAR
-                         << "No se pudo crear el proceso "
-                         << "de la actividad " << it -> first
-                         << endl;
+                    mostrarEvento(EVENTO_ERROR,
+                                  "No se pudo crear el proceso "
+                                  "de la actividad " + it -> first);
 
                     close(canalEntrada[0]);
                     close(canalEntrada[1]);
@@ -203,10 +210,9 @@ void runScheduler(map<string, Actividad> & grafo,
                             _exit(1);
                         }
 
-                        cout << AMARILLO << "[PIPE] "
-                             << REINICIAR << "Actividad "
-                             << it -> first << " recibio: "
-                             << mensajeEntrada << endl;
+                        mostrarEvento(EVENTO_PIPE,
+                                      "Actividad " + it -> first +
+                                      " recibio: " + mensajeEntrada);
                     }
 
                     close(canalEntrada[0]);
@@ -260,11 +266,9 @@ void runScheduler(map<string, Actividad> & grafo,
 
                     if (escritos != MAX_MENSAJE)
                     {
-                        cout << ROJO << "[ERROR] "
-                             << REINICIAR
-                             << "No se pudo enviar el insumo "
-                             << "de la actividad " << idDep
-                             << endl;
+                        mostrarEvento(EVENTO_ERROR,
+                                      "No se pudo enviar el insumo "
+                                      "de la actividad " + idDep);
                     }
                 }
 
@@ -278,19 +282,10 @@ void runScheduler(map<string, Actividad> & grafo,
             }
         }
 
-        if (interrumpido == 1)
+        if (revisarInterrupcion(actividadesActivas,
+                                pipesLectura,
+                                estados) == true)
         {
-            cout << endl
-                 << AZUL << "[INTERRUPCION] "
-                 << REINICIAR
-                 << "Abortando el plan..."
-                 << endl;
-
-            abortarPlan(actividadesActivas,
-                        pipesLectura,
-                        estados);
-
-            signal(SIGINT, SIG_DFL);
             return;
         }
 
@@ -299,28 +294,17 @@ void runScheduler(map<string, Actividad> & grafo,
             int estadoHijo;
             pid_t pidFin = waitpid(-1, &estadoHijo, 0);
 
-            if (interrumpido == 1)
+            if (revisarInterrupcion(actividadesActivas,
+                                    pipesLectura,
+                                    estados) == true)
             {
-                cout << endl
-                     << AZUL << "[INTERRUPCION] "
-                     << REINICIAR
-                     << "Abortando el plan..."
-                     << endl;
-
-                abortarPlan(actividadesActivas,
-                            pipesLectura,
-                            estados);
-
-                signal(SIGINT, SIG_DFL);
                 return;
             }
 
             if (pidFin < 0)
             {
-                cout << ROJO << "[ERROR] "
-                     << REINICIAR
-                     << "No se pudo esperar al proceso hijo"
-                     << endl;
+                mostrarEvento(EVENTO_ERROR,
+                              "No se pudo esperar al proceso hijo");
 
                 signal(SIGINT, SIG_DFL);
                 return;
@@ -342,19 +326,10 @@ void runScheduler(map<string, Actividad> & grafo,
                             MAX_MENSAJE);
             }
 
-            if (interrumpido == 1)
+            if (revisarInterrupcion(actividadesActivas,
+                                    pipesLectura,
+                                    estados) == true)
             {
-                cout << endl
-                     << AZUL << "[INTERRUPCION] "
-                     << REINICIAR
-                     << "Abortando el plan..."
-                     << endl;
-
-                abortarPlan(actividadesActivas,
-                            pipesLectura,
-                            estados);
-
-                signal(SIGINT, SIG_DFL);
                 return;
             }
 
@@ -366,9 +341,9 @@ void runScheduler(map<string, Actividad> & grafo,
             {
                 mensajes[idAct] = mensajeSalida;
 
-                cout << AMARILLO << "[PIPE] "
-                    << REINICIAR << "Mensaje recibido: "
-                    << mensajeSalida << endl;
+                mostrarEvento(EVENTO_PIPE,
+                              "Mensaje recibido: " +
+                              string(mensajeSalida));
 
                 estados[idAct] = TERMINADA;
                 finalizadas++;
@@ -379,9 +354,8 @@ void runScheduler(map<string, Actividad> & grafo,
 
                 estados[idAct] = FALLIDA;
 
-                cout << ROJO << "[FALLIDA] "
-                    << REINICIAR << "Actividad "
-                    << idAct << endl;
+                mostrarEvento(EVENTO_FALLIDA,
+                              "Actividad " + idAct);
 
                 int abortadas =
                     abortarDependientes(idAct,
@@ -397,11 +371,9 @@ void runScheduler(map<string, Actividad> & grafo,
                     if (estadosAnteriores[itEstado -> first] != ABORTADA &&
                         itEstado -> second == ABORTADA)
                     {
-                        cout << MAGENTA << "[ABORTADA] "
-                            << REINICIAR << "Actividad "
-                            << itEstado -> first
-                            << " por depender de "
-                            << idAct << endl;
+                        mostrarEvento(EVENTO_ABORTADA,
+                                      "Actividad " + itEstado -> first +
+                                      " por depender de " + idAct);
                     }
                 }
 
@@ -420,10 +392,8 @@ void runScheduler(map<string, Actividad> & grafo,
         }
         else
         {
-            cout << ROJO << "[ERROR] "
-                 << REINICIAR
-                 << "No hay actividades disponibles para ejecutar"
-                 << endl;
+            mostrarEvento(EVENTO_ERROR,
+                          "No hay actividades disponibles para ejecutar");
 
             signal(SIGINT, SIG_DFL);
             return;
