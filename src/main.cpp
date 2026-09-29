@@ -44,6 +44,11 @@ int main(int argc, char* argv[])
 
     grafo = loadFile(fileName);
 
+    if (grafo.empty())
+    {
+        return -1;
+    }
+
     if (validate(grafo) == false)
     {
         return -1;
