@@ -176,7 +176,7 @@ El proyecto se divide en archivos fuente y de cabecera para mantener separadas s
 
 ### Planificación basada en procesos
 
-Cada actividad se ejecuta mediante un proceso hijo creado con `fork()`. El proceso padre controla la cantidad de actividades activas y respeta el límite de concurrencia indicado por `K`. La espera de procesos se realiza mediante `waitpid()`, evitando la espera activa.
+Cada actividad se ejecuta mediante un proceso hijo creado con `fork()`. El proceso padre controla la cantidad de actividades activas y respeta el límite de concurrencia indicado por `K`. La espera de procesos se realiza mediante `waitpid()`, evitando la espera activa. La actualización de los estados se mantiene centralizada en el proceso padre, evitando modificaciones concurrentes sobre la planificación.
 
 ### Comunicación mediante pipes
 
@@ -188,7 +188,7 @@ El proceso padre revisa el estado de término de cada proceso hijo. Si una activ
 
 ### Manejo de SIGINT
 
-La señal `SIGINT` permite interrumpir la planificación mediante `Ctrl+C`. Cuando se recibe esta señal, el proceso padre termina y espera a los hijos activos, cierra los pipes pendientes y actualiza el estado de las actividades que no alcanzaron a finalizar.
+La señal `SIGINT`, recibida mediante `Ctrl+C`, simula la llegada de una inspección de la Seremi. Ante esta interrupción, el proceso padre envía una señal de término a los hijos activos, espera su finalización para evitar procesos zombis, cierra los pipes pendientes y marca como `ABORTADA` cada actividad que no alcanzó a finalizar.
 
 ### Uso de GNU Make
 
